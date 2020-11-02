@@ -149,15 +149,18 @@ namespace DataManagmentSystem.Web.Controllers
                     ModelState.AddModelError("ForgotPasswordAsyncException", exception.Message);
                     return View(model);
                 }
-                return RedirectToAction("ResetPassword");
+                return RedirectToAction("ResetPassword", "Account", new { email = model.Email });
             }
             return View(model);
         }
 
         [HttpGet]
-        public async Task<IActionResult> ResetPassword()
+        public async Task<IActionResult> ResetPassword(string email)
         {
-            var model = new ResetPasswordModel();
+            var model = new ResetPasswordModel
+            {
+                Email = email
+            };
             return View(model);
         }
 
