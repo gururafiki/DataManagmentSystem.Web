@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using DataManagmentSystem.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DataManagmentSystem.Web.Controllers
 {
@@ -18,6 +19,7 @@ namespace DataManagmentSystem.Web.Controllers
             _logger = logger;
         }
 
+        [Authorize]
         public IActionResult Index()
         {
             return View();

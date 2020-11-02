@@ -1,21 +1,25 @@
 ﻿@{
-    ViewData["Title"] = "SignUp Page";
+    ViewData["Title"] = "SignIn Page";
 }
 
-@model DataManagmentSystem.Web.Models.Account.SignUpModel;
+@model DataManagmentSystem.Web.Models.Account.SignInModel;
 
 <div class="row">
     <div class="col-md-4">
-        <h4>Create a new account</h4>
+        <h4>Login using your email address and password</h4>
         <h5>
-            <a asp-controller="Account" asp-action="SignIn">
-                If you already have account you can sign in here
+            <a asp-controller="Account" asp-action="SignUp">
+                If you are not a member you can sign up here
+            </a>
+        </h5>
+        <h5>
+            <a asp-controller="Account" asp-action="ForgotPassword">
+                If you forgot your password you can reset it here
             </a>
         </h5>
         <hr />
-        <form method="post" asp-controller="Account" asp-action="SignUp">
+        <form method="post" asp-controller="Account" asp-action="SignIn">
             <div asp-validation-summary="All" class="text-danger">
-
             </div>
             <div class="form-group">
                 <label asp-for="Email"></label>
@@ -30,12 +34,11 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="ConfirmPassword"></label>
-                <input asp-for="ConfirmPassword" class="form-control" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                <label asp-for="RememberMe"></label>
+                <input asp-for="RememberMe" />
             </div>
 
-            <button type="submit" class="btn btn-default">Sign up</button>
+            <button type="submit" class="btn btn-default">Sign in</button>
         </form>
     </div>
 </div>

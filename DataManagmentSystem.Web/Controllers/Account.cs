@@ -7,6 +7,8 @@ using DataManagmentSystem.Web.Models.Account;
 using Amazon.AspNetCore.Identity.Cognito;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Amazon.CognitoIdentityProvider.Model;
+using Amazon.CognitoIdentity;
 
 namespace DataManagmentSystem.Web.Controllers
 {
@@ -94,5 +96,94 @@ namespace DataManagmentSystem.Web.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SignIn()
+        {
+            var model = new SignInModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SignIn(SignInModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    ModelState.AddModelError("SignInError", "Email and password do not match.");
+                    return View(model);
+                }
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ForgotPassword()
+        {
+            var model = new ForgotPasswordModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    ModelState.AddModelError("NotFound", "A user with the given email address was not found.");
+                    return View(model);
+                }
+                try
+                {
+                    await user.ForgotPasswordAsync();
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError("ForgotPasswordAsyncException", exception.Message);
+                    return View(model);
+                }
+                return RedirectToAction("ResetPassword");
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword()
+        {
+            var model = new ResetPasswordModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    ModelState.AddModelError("NotFound", "A user with the given email address was not found.");
+                    return View(model);
+                }
+                try
+                {
+                    await user.ConfirmForgotPasswordAsync(model.Token, model.Password);
+                }
+                catch (Exception exception)
+                {
+                    ModelState.AddModelError("ConfirmForgotPasswordAsyncException", exception.Message);
+                    return View(model);
+                }
+                return RedirectToAction("Index", "Home");
+            }
+            return View(model);
+        }
     }
 }
