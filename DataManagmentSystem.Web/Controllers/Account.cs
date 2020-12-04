@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.CognitoIdentity;
+using System.Security.Claims;
+using Amazon.CognitoIdentityProvider;
+using Amazon;
 
 namespace DataManagmentSystem.Web.Controllers
 {
@@ -109,6 +112,16 @@ namespace DataManagmentSystem.Web.Controllers
             if (ModelState.IsValid)
             {
                 var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+
+                if (result.RequiresTwoFactor)
+                {
+                    return RedirectToAction("TwoFactor", "Account");
+                }
+                if (!result.Succeeded)
+                {
+                    result = await _signInManager.TwoFactorAuthenticatorSignInAsync(model.Code, model.RememberMe, false);
+                }
+                
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
@@ -119,6 +132,59 @@ namespace DataManagmentSystem.Web.Controllers
                     return View(model);
                 }
             }
+            return View(model);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> TwoFactor(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            var cognito = new AmazonCognitoIdentityProviderClient(RegionEndpoint.EUCentral1);
+            
+            var softwareToken = await cognito.AssociateSoftwareTokenAsync(new AssociateSoftwareTokenRequest
+            {
+                AccessToken = user.SessionTokens.AccessToken
+            });
+
+            var model = new TwoFactorModel
+            {
+                SecretCode = softwareToken.SecretCode
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TwoFactor(TwoFactorModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                var verifySoftwareTokenRequest = new VerifySoftwareTokenRequest()
+                {
+                    AccessToken = user.SessionTokens.AccessToken,
+                    UserCode = model.Code
+                };
+
+                var cognito = new AmazonCognitoIdentityProviderClient(RegionEndpoint.EUCentral1);
+
+                var verifySoftwareTokenResponse = await cognito.VerifySoftwareTokenAsync(verifySoftwareTokenRequest);
+
+                var setUserMFAPreferenceRequest = new SetUserMFAPreferenceRequest()
+                {
+                    AccessToken = user.SessionTokens.AccessToken,
+                    SoftwareTokenMfaSettings = new SoftwareTokenMfaSettingsType()
+                    {
+                        Enabled = true,
+                        PreferredMfa = true
+                    }
+                };
+                var result = await cognito.SetUserMFAPreferenceAsync(setUserMFAPreferenceRequest);
+                
+                RedirectToAction("Index", "Home");
+            }
+
             return View(model);
         }
 
